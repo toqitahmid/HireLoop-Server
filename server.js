@@ -30,7 +30,7 @@ async function run() {
     const jobCollection = database.collection("jobs");
     const companyCollection = database.collection("companies");
 
-    // jobs api
+    // find jobs depending on companyId and status
     app.get("/api/jobs", async (req, res) => {
       const query = {};
       if (req.query.companyId) {
@@ -45,11 +45,20 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/api/jobs", async (req, res) => {
-      const job = req.body;
-      const result = await jobCollection.insertOne(job);
+    // find all jobs for job seeker
+    app.get('/api/jobs/all', async (req, res) => {
+      const cursor = jobCollection.find();
+      const result = await cursor.toArray();
       res.send(result);
     });
+
+    app.get('/api/jobs/:id', async(req,res) => {
+      const {id} = req.params;
+      const result = await jobCollection.findOne({
+        _id : new ObjectId(id)
+      })
+      res.send(result);
+    })
 
     //companies api
     app.post("/api/companies", async (req, res) => {
