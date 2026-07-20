@@ -29,7 +29,26 @@ async function run() {
     const database = client.db("hireLoop_db");
     const jobCollection = database.collection("jobs");
     const companyCollection = database.collection("companies");
+    const applicationCollection = database.collection("applications");
 
+    // create job api
+    app.post("/api/jobs", async (req, res) => {
+      try {
+        const jobData = req.body;
+
+        // Optional: Add a timestamp when the job is created
+        const newJob = {
+          ...jobData,
+          createdAt: new Date(),
+        };
+
+        const result = await jobCollection.insertOne(newJob);
+        res.status(201).send(result);
+      } catch (error) {
+        console.error("Error creating job:", error);
+        res.status(500).send({ error: "Failed to create job" });
+      }
+    });
     // find jobs depending on companyId and status
     app.get("/api/jobs", async (req, res) => {
       const query = {};
@@ -59,6 +78,31 @@ async function run() {
       })
       res.send(result);
     })
+
+    // applications api
+    app.post("/api/applications", async (req, res) => {
+      const application = req.body;
+      const newApplication = {
+        ...application,
+        createdAt: new Date(),
+      }
+      const result = await applicationCollection.insertOne(newApplication);
+      res.send(result);
+    });
+
+    app.get('/api/applications', async (req,res) => {
+      const query = {};
+      if(req.query.applicantId){
+        query.applicantId = req.query.applicantId;
+      }
+      if(req.query.jobId){
+        query.jobId = req.query.jobId;
+      }
+
+      const cursor = applicationCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
 
     //companies api
     app.post("/api/companies", async (req, res) => {
