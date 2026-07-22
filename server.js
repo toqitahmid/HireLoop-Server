@@ -30,7 +30,9 @@ async function run() {
     const jobCollection = database.collection("jobs");
     const companyCollection = database.collection("companies");
     const applicationCollection = database.collection("applications");
-
+    const planCollection = database.collection("plans");
+    const subscriptionCollection = database.collection('subscriptions')
+    const userCollection = database.collection('user');
     // create job api
     app.post("/api/jobs", async (req, res) => {
       try {
@@ -119,6 +121,35 @@ async function run() {
       });
       res.send(result);
     });
+
+    // plans api
+    app.get("/api/plans", async (req, res) => {
+      const query = {};
+      if(req.query.plan_id){
+        query.id = req.query.plan_id;
+      }
+      const plan = await planCollection.findOne(query);
+      res.send(plan);
+    });
+
+    app.post('/api/subscriptions', async(req,res) => {
+      const data = req.body;
+      const subsInfo = {
+        ...data,
+        createdAt: new Date(),
+      }
+      const result = await subscriptionCollection.insertOne(subsInfo);
+
+      const filter = {email: data.email};
+      const updateDoc = {
+        $set:{
+          plan: data.planId,
+        }
+      }
+      const updateResult = await userCollection.updateOne(filter, updateDoc);
+      res.send({subscription: result, update: updateResult})
+
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log(
